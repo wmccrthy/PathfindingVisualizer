@@ -23,23 +23,6 @@ grid_node_height = 800 / rows
 grid = []
 
 
-# button class to cut down code 
-
-class Button:
-    def __init__(self, text, font, color, xcord, ycord, surf):
-        self.text = text
-        self.font = font
-        self.color = color 
-        self.x = xcord
-        self.y = ycord 
-        font.render(text, True, color)
-        self.surf = surf
-    def place(self):
-        self.surf.blit(self.text, (self.x, self.y))
-        
-
-
-
 # node class with draw method to visualize nodes and values to determine status of node in algorithm logic
 class Node:
   def __init__(self, c, r):
@@ -147,85 +130,8 @@ def DFS(target, searching, frontier, startTime):
   return (runtime[:6], pathLength)
   # return (runtime[:6], pathLength)
 
-def DLS(target, searching, frontier, cutoff, startTime):
-    nodesChecked = 0 
-    depth = 0
-    if not frontier.isEmpty() and searching:
-        if depth == cutoff:
-            searching = False
-            return cutoff
-        curNode = frontier.pop()
-        curNode.visited = True
-        for action in curNode.actions:
-          # next = action
-              if not action.queued and not action.visited and action.wall == False:
-                  action.queued = True
-                  action.parent = curNode
-                  frontier.push(action)
-                  nodesChecked += 1
-                  if nodesChecked == 4:
-                      depth += 1
-                  if action == target:
-                      stop = time.perf_counter()
-                      pathLength = 0
-                      while curNode.start == False:
-                          curNode.path = True
-                          pathLength += 1
-                          curNode = curNode.parent
-                      runtime = str(stop - startTime)
-                   #    print("Path found with length " + str(pathLength))
-                   #    print("Path found in " + runtime[:6] + " seconds")
-                      searching = False
-                      return (runtime[:6], pathLength)
-    pathLength = 0
-    stop2 = time.perf_counter()
-    runtime = str(stop2 - startTime)
-    return (runtime[:6], pathLength)
-def IDDDS(target, searching, frontier, startTime):
-    
-    for c in range(1, 99999):
-        res = DLS(target, searching, frontier, c, startTime)
-        if res != c:
-            return res
-
-def mazeGen(start, count, generating, frontier):
-   if not frontier.isEmpty() and generating:
-       curNode = frontier.pop()
-      #  curNode.wall = False
-       randAct = randint(0, len(curNode.actions)-1)
-       for action in curNode.actions:
-           if action == curNode.actions[randAct]:
-              count += 1
-              action.wall = False
-              # next = action
-           if count > (.50*(50*60)):
-              generating = False
-           if action.wall:
-              frontier.push(action, randint(0, 4) + 1/(euclideanDistance(start.x, start.y, action.x, action.y)+.000000000001)*.1  + 1/euclideanDistance(curNode.x, curNode.y, action.x, action.y))
-              # try adding priority based on distance from start node
-              # action.wall = False
-                      # if action == target:
-           
-                      #     generating = False
-              #  if action not visited (is a wall)
-def prims(target, searching, frontier, startTime): 
-    curNode = frontier.pop()
-    curNode.visited = True
-    for action in curNode.actions:
-        frontier.push(action, 1)
-        action.queued = True
-
-    if not frontier.isEmpty() and searching:
-        curNode = frontier.pop()
-        if curNode.visited == False:
-            curNode.visited = True
-            for action in curNode.actions:
-                action.queued = True
-                frontier.push(action, 1)        
-
 
 def euclideanDistance(c, r ,tr, cr):
- "The Euclidean distance heuristic for a PositionSearchProblem"
  start = (c ,r)
  target = (tr, cr)
  return abs(start[0] - target[0]) + abs(start[1] - target[1])
@@ -307,14 +213,16 @@ def UCS(target, searching, frontier, startTime):
   stop2 = time.perf_counter()
   runtime = str(stop2 - startTime)
   return (runtime[:6], pathLength)
-def uniform():
-  return 1
+
+
+
 def main():
   storage = []
 #    storage to store all search results for an instance of the game
 #    allows users to review and compare the empirical efficiency of algorithms without having to remember each specific run
 #    holds more information than simply the eye test
 #    will store, algorithm used, path length found, time found in, and the wall count for that run
+
   while True:
       start_set = False
       targetNode_set = False
@@ -714,8 +622,6 @@ def main():
           elif begin_search and frontier and ucs:
               toprint = UCS(target, searching, frontier, startTime)
               alg = 'RCS'
-          elif generate:
-              toprint = prims(start, searching, frontier, startTime)
        
           
           window.fill((0,0, 250))
