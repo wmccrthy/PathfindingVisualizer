@@ -7,6 +7,7 @@ import tarfile
 import util
 from turtle import pos, width, window_height, window_width
 import pygame as pg
+import random
 # import pygame_menu
 import sys
 import time
@@ -21,6 +22,23 @@ rows = 50
 grid_node_width = 1200 / columns
 grid_node_height = 800 / rows
 grid = []
+
+
+# button class to cut down code 
+
+class Button:
+    def __init__(self, text, font, color, xcord, ycord, surf):
+        self.text = text
+        self.font = font
+        self.color = color 
+        self.x = xcord
+        self.y = ycord 
+        font.render(text, True, color)
+        self.surf = surf
+    def place(self):
+        self.surf.blit(self.text, (self.x, self.y))
+        
+
 
 
 # node class with draw method to visualize nodes and values to determine status of node in algorithm logic
@@ -130,8 +148,84 @@ def DFS(target, searching, frontier, startTime):
   return (runtime[:6], pathLength)
   # return (runtime[:6], pathLength)
 
+def DLS(target, searching, frontier, cutoff, startTime):
+    nodesChecked = 0 
+    depth = 0
+    if not frontier.isEmpty() and searching:
+        if depth == cutoff:
+            searching = False
+            return cutoff
+        curNode = frontier.pop()
+        curNode.visited = True
+        for action in curNode.actions:
+          # next = action
+              if not action.queued and not action.visited and action.wall == False:
+                  action.queued = True
+                  action.parent = curNode
+                  frontier.push(action)
+                  nodesChecked += 1
+                  if nodesChecked == 4:
+                      depth += 1
+                  if action == target:
+                      stop = time.perf_counter()
+                      pathLength = 0
+                      while curNode.start == False:
+                          curNode.path = True
+                          pathLength += 1
+                          curNode = curNode.parent
+                      runtime = str(stop - startTime)
+                   #    print("Path found with length " + str(pathLength))
+                   #    print("Path found in " + runtime[:6] + " seconds")
+                      searching = False
+                      return (runtime[:6], pathLength)
+    pathLength = 0
+    stop2 = time.perf_counter()
+    runtime = str(stop2 - startTime)
+    return (runtime[:6], pathLength)
+def IDDDS(target, searching, frontier, startTime):
+    
+    for c in range(1, 99999):
+        res = DLS(target, searching, frontier, c, startTime)
+        if res != c:
+            return res
+
+
+def mazeGen(target, searching, frontier, startTime, count): 
+
+    if len(frontier) > 0:
+        # print("working")
+        curWall = random.choice(frontier)
+        curWall.visited = True
+        # count += 1
+        visCount = 0
+        for action in curWall.actions:
+            if action.visited:
+                visCount += 1
+                action.wall = False
+                # count += 1
+        if visCount == 0:
+            curWall.wall = False
+            frontier.remove(curWall)
+         
+
+
+
+    # if not frontier.isEmpty() and searching:
+    #     curNode = frontier.pop()
+    #     proxEmpty = 0
+    #     for action in curNode.actions:
+    #             # action.queued = True
+    #             if action.wall == False:
+    #                 proxEmpty += 1
+    #             frontier.push(action, randint(-50, 50))
+    #     if curNode.wall == True:
+    #         if proxEmpty <= 2:
+    #             curNode.wall = False
+                    
+
 
 def euclideanDistance(c, r ,tr, cr):
+ "The Euclidean distance heuristic for a PositionSearchProblem"
  start = (c ,r)
  target = (tr, cr)
  return abs(start[0] - target[0]) + abs(start[1] - target[1])
@@ -213,16 +307,14 @@ def UCS(target, searching, frontier, startTime):
   stop2 = time.perf_counter()
   runtime = str(stop2 - startTime)
   return (runtime[:6], pathLength)
-
-
-
+def uniform():
+  return 1
 def main():
   storage = []
 #    storage to store all search results for an instance of the game
 #    allows users to review and compare the empirical efficiency of algorithms without having to remember each specific run
 #    holds more information than simply the eye test
 #    will store, algorithm used, path length found, time found in, and the wall count for that run
-
   while True:
       start_set = False
       targetNode_set = False
@@ -589,6 +681,7 @@ def main():
                       target = None
                       frontier = None
                       count = 0
+                      frontier = []
                       for c in range(columns):
                           for r in range(rows):
                               node = grid[c][r]
@@ -602,8 +695,9 @@ def main():
                               # values for retracing shorfrontier path after found
                               node.parent = None
                               node.path = False
+                              frontier.append(node)
                       generate = True
-                      frontier = util.PriorityQueue()
+                    #   frontier = []
                       # randX = randint(0, 59)
                       # randY = randint(0, 49)
                       # targX = randint(0, 59)
@@ -611,7 +705,7 @@ def main():
                       start = grid[0][0]
                       target = grid[49][49]
                       startTime = 0
-                      frontier.push(start, 0)
+                    #   frontier.append(start)
           if begin_search and frontier and not A_starr and not ucs:
               # depending on inputted frontier, will be either DFS or BFS; for DFS uses Stack for frontier, for BFS uses Queue
               toprint = DFS(target, searching, frontier, startTime)
@@ -622,6 +716,28 @@ def main():
           elif begin_search and frontier and ucs:
               toprint = UCS(target, searching, frontier, startTime)
               alg = 'RCS'
+          elif generate:
+              count = 0
+              for c in range(columns):
+                    for r in range(rows):
+                        node = grid[c][r]
+                        if node.visited:
+                            count += 1
+              if count > 2000:
+                  generate  = False
+                  for c in range(columns):
+                         for r in range(rows):
+                             node = grid[c][r]
+                             # node.start = False
+                             # node.target = False
+                             # values to be set by the user and used in search
+                             # values for controlling search
+                             node.visited = False
+                             node.queued = False
+                             # values for retracing shorfrontier path after found
+                             node.parent = None
+                             node.path = False
+              toprint = mazeGen(start, generate, frontier, startTime, count)
        
           
           window.fill((0,0, 250))
@@ -643,9 +759,6 @@ def main():
               for r in range(rows):
                   node = grid[c][r]
                   node.draw(gridsurf, (250, 250, 250), 1)
-                  if node.wall == True:
-                      node.draw(gridsurf, (0, 0, 0), 1)
-                      wallCount += 1
                   if node.start == True:
                       node.draw(gridsurf, (255,255, 0), 1)
                   if node.target == True:
@@ -654,6 +767,11 @@ def main():
                       node.draw(gridsurf, (200, 140, 130), 1)
                   if not node.start and node.visited == True:
                       node.draw(gridsurf, (0, 0, 250), 1)
+                  if generate:
+                      node.draw(gridsurf, (250, 250, 250), 1)
+                  if node.wall == True:
+                      node.draw(gridsurf, (0, 0, 0), 1)
+                      wallCount += 1
                   if node.path == True:
                       node.draw(gridsurf, (250,0, 0), 1)
                       begin_search = False
