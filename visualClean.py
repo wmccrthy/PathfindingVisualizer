@@ -17,8 +17,8 @@ SIZE = WIDTH, HEIGHT = info.current_w, info.current_h
 window_width = 1000
 window_height = 800
 window = pg.display.set_mode((window_width, window_height))
-columns = 50
-rows = 50
+columns = 40
+rows = 40
 grid_node_width = 1000 / columns
 grid_node_height = 800 / rows
 grid = []
@@ -63,10 +63,19 @@ class Node:
   def draw(self, window, color, separation):
       navX = pg.mouse.get_pos()[0]
       navY = pg.mouse.get_pos()[1]
+      width = 0
+      border_rad = 0
       if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2:
-          color = (200,200,200)
-
-      pg.draw.rect(window, color, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation))
+          if color == (0,0,0):
+              shade = (100,100,100)
+          else:
+              shade = ((color[0]*7/8, color[1]*7/8, color[2]*7/8))
+          color = (50,50,50)
+          pg.draw.rect(window, shade, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation), border_radius=2)
+          width = 1
+          border_rad = 2
+      pg.draw.rect(window, color, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation), width=width, border_radius=border_rad)
+    #   pg.draw.aaline()
 #  function for appending all legal actions to nodes
 #  fills self.actions list
   def getActions(self):
@@ -194,7 +203,7 @@ def IDDDS(target, searching, frontier, startTime):
         if res != c:
             return res
 
-def mazeGen(target, searching, frontier, startTime, count): 
+def mazeGen(frontier, count): 
 
     if len(frontier) > 0:
         # print("working")
@@ -208,24 +217,30 @@ def mazeGen(target, searching, frontier, startTime, count):
                 action.wall = False
                 # frontier.append(action)
                 count += 1
-        if visCount == 0:
+        if visCount == 1 or 3:
             curWall.wall = False
             frontier.remove(curWall)
-         
 
+def mazeGen2(frontier, count): 
+    
+    if len(frontier) > 0:
+        # print("working")
+        curWall = random.choice(frontier)
+        curWall.visited = True
+        count += 1
+        visCount = 0
+        for action in curWall.actions:
+            if action.wall:
+                frontier.append(action)
+            if action.visited:
+                visCount += 1
+                # action.wall = False
+                # count += 1
 
-
-    # if not frontier.isEmpty() and searching:
-    #     curNode = frontier.pop()
-    #     proxEmpty = 0
-    #     for action in curNode.actions:
-    #             # action.queued = True
-    #             if action.wall == False:
-    #                 proxEmpty += 1
-    #             frontier.push(action, randint(-50, 50))
-    #     if curNode.wall == True:
-    #         if proxEmpty <= 2:
-    #             curNode.wall = False
+        if visCount == 1 or 0:
+            curWall.wall = False
+            frontier.remove(curWall)
+    
                     
 
 
@@ -365,7 +380,7 @@ def main():
           window.fill((250, 250, 250))
           pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
           pg.mouse.set_visible(False)
-          pg.draw.circle(window, (0,0,0),  (pg.mouse.get_pos()[0], pg.mouse.get_pos()[1]), 2)
+          pg.draw.circle(window, (0,0,0),  (pg.mouse.get_pos()[0], pg.mouse.get_pos()[1]), 3, width=1)
           header = headerFont.render("Pathfinding Visualizer", True, (0,0,0))
           header_cords = (window_width/2-header.get_width()/2, window_height/2-150)
 
@@ -447,8 +462,8 @@ def main():
           instructions = font.render("s key sets start node, t sets target node, hold click to create walls. ", True, (0,0, 0))
           instructions2 = font.render("press corresponding key after start or target set to reset ", True, (0, 0, 0))
           algos = font.render("d to use depth first search, b to use breadth first search. a to use a*, u to do a random cost search", True,(0, 0, 0))
-          instructions3 = font.render("press r or w to reset search, w keeps walls. press c to clear the search", True, (0, 0, 0))
-          click = font.render("press delete to return to main menu from any section", True, (0, 0, 0))
+          instructions3 = font.render("press r or c to reset search, c keeps walls. press m to generate a maze", True, (0, 0, 0))
+          click = font.render("press delete to return to main menu from any subpage", True, (0, 0, 0))
           window.blit(click, (window_width/2-click.get_width()/2, header_cords[1]+310))
           window.blit(instructions, (window_width/2-instructions.get_width()/2, header_cords[1]+100))
           window.blit(instructions2, (window_width/2-instructions2.get_width()/2, header_cords[1]+155))
@@ -711,13 +726,15 @@ def main():
                               frontier.append(node)
                       generate = True
                     #   frontier = []
-                      # randX = randint(0, 59)
-                      # randY = randint(0, 49)
-                      # targX = randint(0, 59)
-                      # targY = randint(0, 49)
-                      start = grid[24][24]
-                    #   target = grid[49][49]
+                    #   randX = randint(0, 39)
+                    #   randY = randint(0, 39)
+                    #   # targX = randint(0, 59)
+                    #   # targY = randint(0, 49)
+                    #   start = grid[randX][randY]
+                    # #   target = grid[49][49]
                     #   frontier.append(start)
+                    #   for action in start.actions:
+                    #       frontier.append(action)
                       startTime = 0
                     #   frontier.append(start)
           if begin_search and frontier and not A_starr and not ucs:
@@ -737,8 +754,8 @@ def main():
                         node = grid[c][r]
                         if node.visited:
                             numVisited += 1
-              toprint = mazeGen(start, generate, frontier, startTime, numVisited)
-              if numVisited > 2000:
+              toprint = mazeGen(frontier, startTime)
+              if numVisited > 1100:
                   generate  = False
                   numVisited = 0
                   for c in range(columns):
@@ -781,9 +798,8 @@ def main():
                   if node.queued == True:
                       node.draw(gridsurf, (200, 140, 130), 0)
                   if not node.start and node.visited == True:
-                      node.draw(gridsurf, (0, 0, 250), 0)
-                  if generate:
-                      node.draw(gridsurf, (250, 250, 250), 0)
+                      if not generate:
+                        node.draw(gridsurf, (0, 0, 250), 0)
                   if node.wall == True:
                       node.draw(gridsurf, (0, 0, 0), 0)
                       wallCount += 1
@@ -793,12 +809,12 @@ def main():
                       pathC += 1
 
                       result = True
-          pg.draw.circle(gridsurf, (0,0,0),  (navX, navY), 2)
-        #   pg.time.Clock().tick(240)
+          pg.draw.circle(gridsurf, (0,0,0),  (navX, navY), 3, width=1)
+          pg.time.Clock().tick(360)
         
           window.blit(gridsurf, (0, 0))
 
-
+        # display result on top of screen; fill storage w results of search; 
           if result == True:
            #    alg, length, time, wallCount format
            #
