@@ -61,6 +61,11 @@ class Node:
       self.actions = []
       self.wall_prox = 0
   def draw(self, window, color, separation):
+      navX = pg.mouse.get_pos()[0]
+      navY = pg.mouse.get_pos()[1]
+      if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2:
+          color = (200,200,200)
+
       pg.draw.rect(window, color, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation))
 #  function for appending all legal actions to nodes
 #  fills self.actions list
@@ -789,6 +794,7 @@ def main():
 
                       result = True
           pg.draw.circle(gridsurf, (0,0,0),  (navX, navY), 2)
+        #   pg.time.Clock().tick(240)
         
           window.blit(gridsurf, (0, 0))
 
