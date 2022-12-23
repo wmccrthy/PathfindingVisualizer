@@ -1,14 +1,7 @@
-from cgi import test
-import os
-from pickle import FALSE
-from random import Random, randint
-import tarfile
-# from tkinter import Menu
+
 import util
-from turtle import pos, width, window_height, window_width
 import pygame as pg
 import random
-# import pygame_menu
 import sys
 import time
 pg.init()
@@ -19,8 +12,8 @@ window_height = 800
 window = pg.display.set_mode((window_width, window_height))
 columns = 40
 rows = 40
-grid_node_width = 1000 / columns
-grid_node_height = 800 / rows
+grid_node_width = window_width / columns
+grid_node_height = window_height / rows
 grid = []
 
 pg.display.set_caption("Pathfinding Visualizer")
@@ -60,12 +53,34 @@ class Node:
       # actions for checking surrounding nodes in search
       self.actions = []
       self.wall_prox = 0
+
+  def reset(self):
+    #   reset nodes when switching between searches, etc
+      self.start = False
+      self.wall = False
+      self.target = False
+
+      # values to be set by the user and used in search
+      # values for controlling search
+      self.visited = False
+      self.queued = False
+      # values for retracing shorfrontier path after found
+      self.parent = None
+      self.path = False
+  
+  def resetSearch(self):
+      self.visited = False
+      self.queued = False
+      # values for retracing shorfrontier path after found
+      self.parent = None
+      self.path = False
+
   def draw(self, window, color, separation):
       navX = pg.mouse.get_pos()[0]
       navY = pg.mouse.get_pos()[1]
       width = 0
       border_rad = 0
-      if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2:
+      if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2.15 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2.15:
           if color == (0,0,0):
               shade = (100,100,100)
           else:
@@ -582,16 +597,7 @@ def main():
                        for c in range(columns):
                           for r in range(rows):
                               node = grid[c][r]
-                              node.start = False
-                              node.wall = False
-                              node.target = False
-                              # values to be set by the user and used in search
-                              # values for controlling search
-                              node.visited = False
-                              node.queued = False
-                              # values for retracing shorfrontier path after found
-                              node.parent = None
-                              node.path = False
+                              node.reset()
                    #    modify this so bug where going to mainmen and coming back requires reset before search (make it auto reset)
                   
                   x = pg.mouse.get_pos()[0]
@@ -661,16 +667,8 @@ def main():
                       for c in range(columns):
                           for r in range(rows):
                               node = grid[c][r]
-                              node.start = False
-                              node.wall = False
-                              node.target = False
-                              # values to be set by the user and used in search
-                              # values for controlling search
-                              node.visited = False
-                              node.queued = False
-                              # values for retracing shorfrontier path after found
-                              node.parent = None
-                              node.path = False
+                              node.reset()
+
                   if event.key == pg.K_w:
                       result = False
                       start_set, targetNode_set = False, False
@@ -680,30 +678,14 @@ def main():
                       for c in range(columns):
                           for r in range(rows):
                               node = grid[c][r]
-                              node.start = False
-                              node.target = False
-                              # values to be set by the user and used in search
-                              # values for controlling search
-                              node.visited = False
-                              node.queued = False
-                              # values for retracing shorfrontier path after found
-                              node.parent = None
-                              node.path = False
+                              node.reset()
                   if event.key == pg.K_c:
                      result = False
                      frontier = None
                      for c in range(columns):
                          for r in range(rows):
                              node = grid[c][r]
-                             # node.start = False
-                             # node.target = False
-                             # values to be set by the user and used in search
-                             # values for controlling search
-                             node.visited = False
-                             node.queued = False
-                             # values for retracing shorfrontier path after found
-                             node.parent = None
-                             node.path = False
+                             node.resetSearch()
                   if event.key == pg.K_m:
                       start_set, targetNode_set = False, False
                       start = None
@@ -713,30 +695,12 @@ def main():
                       for c in range(columns):
                           for r in range(rows):
                               node = grid[c][r]
-                              node.start = False
+                              node.reset()
                               node.wall = True
-                              node.target = False
-                              # values to be set by the user and used in search
-                              # values for controlling search
-                              node.visited = False
-                              node.queued = False
-                              # values for retracing shorfrontier path after found
-                              node.parent = None
-                              node.path = False
                               frontier.append(node)
                       generate = True
-                    #   frontier = []
-                    #   randX = randint(0, 39)
-                    #   randY = randint(0, 39)
-                    #   # targX = randint(0, 59)
-                    #   # targY = randint(0, 49)
-                    #   start = grid[randX][randY]
-                    # #   target = grid[49][49]
-                    #   frontier.append(start)
-                    #   for action in start.actions:
-                    #       frontier.append(action)
                       startTime = 0
-                    #   frontier.append(start)
+
           if begin_search and frontier and not A_starr and not ucs:
               # depending on inputted frontier, will be either DFS or BFS; for DFS uses Stack for frontier, for BFS uses Queue
               toprint = DFS(target, searching, frontier, startTime)
@@ -761,15 +725,7 @@ def main():
                   for c in range(columns):
                          for r in range(rows):
                              node = grid[c][r]
-                             # node.start = False
-                             # node.target = False
-                             # values to be set by the user and used in search
-                             # values for controlling search
-                             node.visited = False
-                             node.queued = False
-                             # values for retracing shorfrontier path after found
-                             node.parent = None
-                             node.path = False
+                             node.resetSearch()
        
           
           window.fill((0,0, 250))
