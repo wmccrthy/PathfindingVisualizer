@@ -654,7 +654,17 @@ def main():
                           for r in range(rows):
                               node = grid[c][r]
                               node.reset()
-
+                  if event.key == pg.K_l:
+                    for c in range(columns):
+                        for r in range(rows):
+                            node = grid[c][r]
+                            randInt = random.randint(0, 8)
+                            if randInt < 3 and not node.wall:
+                                node.weight = random.randint(1,20)
+                                # node.wall = True
+                            elif not node.wall:
+                                # node.wall = False
+                                node.weight = random.randint(0,1)
                   if event.key == pg.K_w:
                       x = pg.mouse.get_pos()[0]
                       y = pg.mouse.get_pos()[1]
