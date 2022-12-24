@@ -16,6 +16,7 @@ grid_node_width = window_width / columns
 grid_node_height = window_height / rows
 grid = []
 
+out = pg.font.SysFont('chalkboardse', 15)
 pg.display.set_caption("Pathfinding Visualizer")
 # button class to cut down code 
 
@@ -54,6 +55,8 @@ class Node:
       self.actions = []
       self.wall_prox = 0
 
+      self.weight = 0
+
   def reset(self):
     #   reset nodes when switching between searches, etc
       self.start = False
@@ -67,6 +70,7 @@ class Node:
       # values for retracing shorfrontier path after found
       self.parent = None
       self.path = False
+      self.weight = 0
   
   def resetSearch(self):
       self.visited = False
@@ -80,9 +84,9 @@ class Node:
       navY = pg.mouse.get_pos()[1]
       width = 0
       border_rad = 0
-      if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2.15 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2.15:
+      if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2.25 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2.25:
           if color == (0,0,0):
-              shade = (100,100,100)
+              shade = (50,70,70)
           else:
               shade = ((color[0]*7/8, color[1]*7/8, color[2]*7/8))
           color = (50,50,50)
@@ -164,7 +168,7 @@ def DFS(target, searching, frontier, startTime):
                       pathLength = 0
                       while curNode.start == False:
                           curNode.path = True
-                          pathLength += 1
+                          pathLength += 1 + curNode.weight
                           curNode = curNode.parent
                       runtime = str(stop - startTime)
                    #    print("Path found with length " + str(pathLength))
@@ -291,7 +295,7 @@ def A_star(target, searching, frontier, startTime):
               if not action.queued and not action.visited and action.wall == False:
                   action.queued = True
                   action.parent = curNode
-                  frontier.push(action, pathCost + euclideanDistance(action.x, action.y, target.x, target.y))
+                  frontier.push(action, pathCost + euclideanDistance(action.x, action.y, target.x, target.y) + action.weight)
   pathLength = 0
   stop2 = time.perf_counter()
   runtime = str(stop2 - startTime)
@@ -338,7 +342,7 @@ def UCS(target, searching, frontier, startTime):
                   action.queued = True
                   action.parent = curNode
                 #   frontier.append(action)
-                  frontier.push(action, action.wall_prox)
+                  frontier.push(action, action.weight)
                   
                 #   randint(0,2) - action.wall_prox + 1/euclideanDistance(action.x, action.y, curNode.x, curNode.y)
   pathLength = 0
@@ -354,6 +358,7 @@ def main():
 #    holds more information than simply the eye test
 #    will store, algorithm used, path length found, time found in, and the wall count for that run
   while True:
+      seeNode = True
       start_set = False
       targetNode_set = False
  
@@ -390,7 +395,7 @@ def main():
       hoverFont.set_underline(True)
       hoverFont.set_bold(True)
       headerFont = pg.font.SysFont('chalkboardse', 55)
-   #    headerFont.set_bold(True)
+
       while display_mainmen and not display_instruc:
           window.fill((250, 250, 250))
           pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
@@ -398,9 +403,6 @@ def main():
           pg.draw.circle(window, (0,0,0),  (pg.mouse.get_pos()[0], pg.mouse.get_pos()[1]), 3, width=1)
           header = headerFont.render("Pathfinding Visualizer", True, (0,0,0))
           header_cords = (window_width/2-header.get_width()/2, window_height/2-150)
-
-        #   header = Button("Pathfinding Visualizer", headerFont, (250, 250,250), header_cords[0], header_cords[1], window)
-        #   header.place()
 
           x = pg.mouse.get_pos()[0]
           y = pg.mouse.get_pos()[1]
@@ -429,10 +431,6 @@ def main():
               if y >= header_cords[1] + 400 and y < header_cords[1] + 400+play.get_height():
                qt = hoverFont.render("Quit", True, (0,0,0))
                pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
- 
-         
- 
-           
          
           window.blit(header, header_cords)
           window.blit(play, (header_cords[0], header_cords[1]+100))
@@ -476,7 +474,7 @@ def main():
           window.blit(header, header_cords)
           instructions = font.render("s key sets start node, t sets target node, hold click to create walls. ", True, (0,0, 0))
           instructions2 = font.render("press corresponding key after start or target set to reset ", True, (0, 0, 0))
-          algos = font.render("d to use depth first search, b to use breadth first search. a to use a*, u to do a random cost search", True,(0, 0, 0))
+          algos = font.render("d to use depth first search, b to use breadth first search. a to use a*, u to do dijkstras", True,(0, 0, 0))
           instructions3 = font.render("press r or c to reset search, c keeps walls. press m to generate a maze", True, (0, 0, 0))
           click = font.render("press delete to return to main menu from any subpage", True, (0, 0, 0))
           window.blit(click, (window_width/2-click.get_width()/2, header_cords[1]+310))
@@ -519,15 +517,9 @@ def main():
                   if event.key == pg.K_BACKSPACE:
                        display_mainmen = True
                        display_stored = False
-         
- 
  
       while not display_instruc and not display_mainmen and display_vis:
-        #   pg.mouse.set_cursor(pg.cursors.diamond)
-        #   pg.mouse.set_cursor(pg.cursors.broken_x)
-          pg.mouse.set_visible(False)
-          
-
+          pg.mouse.set_visible(False) 
         # create buttons for doing searches 
           op_buttons = []
 
@@ -559,12 +551,6 @@ def main():
               if y >= header_cords[1] + 325 and y < header_cords[1] + 325+play.get_height():
                aut = hoverFont.render("Author", True, (0,0,0))
                pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
-        #   if x - header_cords[0] <= qt.get_width() and x - header_cords[0] >= 0:
-        #        if y >= header_cords[1] + 400 and y < header_cords[1] + 400+play.get_height():
-        #        qt = hoverFont.render("Quit", True, (250,250,250))
-        #        pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
-
-        
 
           for event in pg.event.get():
               if event.type == pg.QUIT:
@@ -670,15 +656,14 @@ def main():
                               node.reset()
 
                   if event.key == pg.K_w:
-                      result = False
-                      start_set, targetNode_set = False, False
-                      start = None
-                      target = None
-                      frontier = None
-                      for c in range(columns):
-                          for r in range(rows):
-                              node = grid[c][r]
-                              node.reset()
+                      x = pg.mouse.get_pos()[0]
+                      y = pg.mouse.get_pos()[1]
+                      c = int (x/grid_node_width)
+                      r = int (y/grid_node_height)
+                      noRep = 0
+                      if noRep == 0:
+                        grid[c][r].weight += 1
+                      noRep += 1
                   if event.key == pg.K_c:
                      result = False
                      frontier = None
@@ -700,6 +685,12 @@ def main():
                               frontier.append(node)
                       generate = True
                       startTime = 0
+                  if event.key == pg.K_n:
+                      if seeNode:
+                          seeNode = False
+                      else:
+                          seeNode = True
+
 
           if begin_search and frontier and not A_starr and not ucs:
               # depending on inputted frontier, will be either DFS or BFS; for DFS uses Stack for frontier, for BFS uses Queue
@@ -710,7 +701,7 @@ def main():
               alg = "A*"
           elif begin_search and frontier and ucs:
               toprint = UCS(target, searching, frontier, startTime)
-              alg = 'RCS'
+              alg = 'Dijkstras'
           elif generate:
               numVisited = 0
               for c in range(columns):
@@ -719,7 +710,7 @@ def main():
                         if node.visited:
                             numVisited += 1
               toprint = mazeGen(frontier, startTime)
-              if numVisited > 1100:
+              if numVisited > 1050:
                   generate  = False
                   numVisited = 0
                   for c in range(columns):
@@ -737,8 +728,6 @@ def main():
           pathC = 0
           wallCount = 0
         
-          
-
         #   surf for grid (used to have nav tab on left)
           gridsurf = pg.Surface((1200, 800))
           gridsurf.fill((250, 250,250 ))
@@ -747,6 +736,10 @@ def main():
               for r in range(rows):
                   node = grid[c][r]
                   node.draw(gridsurf, (250, 250, 250), 0)
+                  if node.weight > 0:
+                      print(node.weight)
+                      node.draw(gridsurf, (220-node.weight*5,220-node.weight*5,220-node.weight*5), 0)
+                    #   make thing to display info abt node hovered over at top
                   if node.start == True:
                       node.draw(gridsurf, (0,205, 0), 0)
                   if node.target == True:
@@ -765,15 +758,24 @@ def main():
                       pathC += 1
 
                       result = True
+                
           pg.draw.circle(gridsurf, (0,0,0),  (navX, navY), 3, width=1)
           pg.time.Clock().tick(360)
-        
+
+
           window.blit(gridsurf, (0, 0))
+          
+          if seeNode:
+            x = pg.mouse.get_pos()[0]
+            y = pg.mouse.get_pos()[1]
+            c = int (x/grid_node_width)
+            r = int (y/grid_node_height)
+            nodeInfo = out.render("Node Weight: " + str(grid[c][r].weight) +  " Node Position: " + str(grid[c][r].x) + ", " + str(grid[c][r].y), True, (0,0,0), (250,250,250))
+            window.blit(nodeInfo, (window_width/2-nodeInfo.get_width()/2, 0))
 
         # display result on top of screen; fill storage w results of search; 
           if result == True:
            #    alg, length, time, wallCount format
-           #
               res = (alg, toprint[1], toprint[0], wallCount)
               if not storage.__contains__(res):
                   storage.append(res)
@@ -785,13 +787,10 @@ def main():
               window.blit(sol, (window_width/2-sol.get_width()/2, 0))
               window.blit(tm, (window_width/2-tm.get_width()/2, 22))
               result = False
-         
-        #   draw mouse dot 
-          
+   
           pg.display.flip()
        
 main()
-# print(pg.font.get_fonts())
  
  
  
