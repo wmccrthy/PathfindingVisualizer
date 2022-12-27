@@ -5,8 +5,8 @@ import random
 import sys
 import time
 pg.init()
-info = pg.display.Info()
-SIZE = WIDTH, HEIGHT = info.current_w, info.current_h
+# info = pg.display.Info()
+# SIZE = WIDTH, HEIGHT = info.current_w, info.current_h
 window_width = 1000
 window_height = 800
 window = pg.display.set_mode((window_width, window_height))
@@ -18,21 +18,6 @@ grid = []
 
 out = pg.font.SysFont('chalkboardse', 15)
 pg.display.set_caption("Pathfinding Visualizer")
-# button class to cut down code 
-
-class Button:
-    def __init__(self, text, font, color, xcord, ycord, surf):
-        self.text = text
-        self.font = font
-        self.color = color 
-        self.x = xcord
-        self.y = ycord 
-        font.render(text, True, color)
-        self.surf = surf
-    def place(self):
-        self.surf.blit(self.text, (self.x, self.y))
-        
-
 
 
 # node class with draw method to visualize nodes and values to determine status of node in algorithm logic
@@ -164,12 +149,14 @@ def DFS(target, searching, frontier, startTime):
                   action.parent = curNode
                   frontier.push(action)
                   if action == target:
+                      action.path = True
                       stop = time.perf_counter()
                       pathLength = 0
                       while curNode.start == False:
                           curNode.path = True
                           pathLength += 1 + curNode.weight
                           curNode = curNode.parent
+
                       runtime = str(stop - startTime)
                    #    print("Path found with length " + str(pathLength))
                    #    print("Path found in " + runtime[:6] + " seconds")
@@ -216,7 +203,6 @@ def DLS(target, searching, frontier, cutoff, startTime):
     runtime = str(stop2 - startTime)
     return (runtime[:6], pathLength)
 def IDDDS(target, searching, frontier, startTime):
-    
     for c in range(1, 99999):
         res = DLS(target, searching, frontier, c, startTime)
         if res != c:
@@ -282,6 +268,7 @@ def A_star(target, searching, frontier, startTime):
                       pathLength = 0
                       while curNode.start == False:
                           curNode.path = True
+                          pathLength += curNode.weight
                           pathLength += 1
                           curNode = curNode.parent
                       stop = time.perf_counter()
@@ -302,9 +289,10 @@ def A_star(target, searching, frontier, startTime):
   return (runtime[:6], pathLength)
 
 
-def UCS(target, searching, frontier, startTime):
-  test_cost = 0
+def Dijkstra(target, searching, frontier, startTime):
+  pathCost = 0
   if not frontier.isEmpty() and searching:
+      pathCost += 1
     #   curNode = random.choice(frontier)
     #   frontier.remove(curNode)
       curNode = frontier.pop()
@@ -330,8 +318,10 @@ def UCS(target, searching, frontier, startTime):
                       pathLength = 0
                       while curNode.start == False:
                           curNode.path = True
+                          pathLength += curNode.weight
                           curNode = curNode.parent
                           pathLength += 1
+                          
                       stop = time.perf_counter()
                       runtime = str(stop - startTime)
                    #    print("Path found with length " + str(pathLength))
@@ -342,7 +332,7 @@ def UCS(target, searching, frontier, startTime):
                   action.queued = True
                   action.parent = curNode
                 #   frontier.append(action)
-                  frontier.push(action, action.weight)
+                  frontier.push(action, action.weight + pathCost)
                   
                 #   randint(0,2) - action.wall_prox + 1/euclideanDistance(action.x, action.y, curNode.x, curNode.y)
   pathLength = 0
@@ -503,7 +493,7 @@ def main():
               yCord += no_hist.get_height()
               window.blit(no_hist, (10, yCord))
           for res in storage:
-              toDisp = font.render(str(search_count) + ". " +  res[0] + " | Length: " + str(res[1]) + " | Time: " + str(res[2]) + " | Wall Count: " + str(res[3]), True, (0,0,0))
+              toDisp = font.render(str(search_count) + ". " +  res[0] + " | Length/Cost: " + str(res[1]) + " | Time: " + str(res[2]) + " | Wall Count: " + str(res[3]), True, (0,0,0))
               yCord += toDisp.get_height()
               search_count += 1
               window.blit(toDisp, (10, yCord))
@@ -658,13 +648,13 @@ def main():
                     for c in range(columns):
                         for r in range(rows):
                             node = grid[c][r]
-                            randInt = random.randint(0, 8)
+                            randInt = random.randint(0, 11)
                             if randInt < 3 and not node.wall:
                                 node.weight = random.randint(1,20)
                                 # node.wall = True
                             elif not node.wall:
                                 # node.wall = False
-                                node.weight = random.randint(0,1)
+                                node.weight = 0
                   if event.key == pg.K_w:
                       x = pg.mouse.get_pos()[0]
                       y = pg.mouse.get_pos()[1]
@@ -674,6 +664,14 @@ def main():
                       if noRep == 0:
                         grid[c][r].weight += 1
                       noRep += 1
+                  if event.key == pg.K_q:
+                      x = pg.mouse.get_pos()[0]
+                      y = pg.mouse.get_pos()[1]
+                      c = int (x/grid_node_width)
+                      r = int (y/grid_node_height)
+                      if grid[c][r].weight > 0:
+                        grid[c][r].weight -= 1
+                    
                   if event.key == pg.K_c:
                      result = False
                      frontier = None
@@ -710,7 +708,7 @@ def main():
               toprint = A_star(target, searching, frontier, startTime)
               alg = "A*"
           elif begin_search and frontier and ucs:
-              toprint = UCS(target, searching, frontier, startTime)
+              toprint = Dijkstra(target, searching, frontier, startTime)
               alg = 'Dijkstras'
           elif generate:
               numVisited = 0
@@ -747,7 +745,7 @@ def main():
                   node = grid[c][r]
                   node.draw(gridsurf, (250, 250, 250), 0)
                   if node.weight > 0:
-                      print(node.weight)
+                    #   print(node.weight)
                       node.draw(gridsurf, (220-node.weight*5,220-node.weight*5,220-node.weight*5), 0)
                     #   make thing to display info abt node hovered over at top
                   if node.start == True:
@@ -791,8 +789,8 @@ def main():
                   storage.append(res)
                   print()
                   for res in storage:
-                      print(res[0] + " Length: " + str(res[1]) + " Time: " + str(res[2]) + " Wall Count: " + str(res[3]))
-              sol = out.render(alg + " path found with length " + str(toprint[1]), True, (250, 250, 250), (0,0,250))
+                      print(res[0] + " Length/Cost: " + str(res[1]) + " Time: " + str(res[2]) + " Wall Count: " + str(res[3]))
+              sol = out.render(alg + " path found with length/cost " + str(toprint[1]), True, (250, 250, 250), (0,0,250))
               tm = out.render("Found in " + str(toprint[0] + " seconds"), True, (250, 250, 250 ), (0,0, 250))
               window.blit(sol, (window_width/2-sol.get_width()/2, 0))
               window.blit(tm, (window_width/2-tm.get_width()/2, 22))
