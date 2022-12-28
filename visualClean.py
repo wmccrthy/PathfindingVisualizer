@@ -151,7 +151,7 @@ def DFS(target, searching, frontier, startTime):
                   if action == target:
                       action.path = True
                       stop = time.perf_counter()
-                      pathLength = 0
+                      pathLength = 1
                       while curNode.start == False:
                           curNode.path = True
                           pathLength += 1 + curNode.weight
@@ -216,13 +216,16 @@ def mazeGen(frontier, count):
         curWall.visited = True
         count += 1
         visCount = 0
+        wallProx = 0
         for action in curWall.actions:
+            if action.wall:
+                wallProx += 1
             if action.visited:
                 visCount += 1
-                action.wall = False
+                # action.wall = False
                 # frontier.append(action)
                 count += 1
-        if visCount == 1 or 3:
+        if wallProx == 0 or 3:
             curWall.wall = False
             frontier.remove(curWall)
 
@@ -645,16 +648,27 @@ def main():
                               node = grid[c][r]
                               node.reset()
                   if event.key == pg.K_l:
+                    prevCount = 0
+                    wallC = 0
                     for c in range(columns):
                         for r in range(rows):
                             node = grid[c][r]
-                            randInt = random.randint(0, 11)
-                            if randInt < 3 and not node.wall:
+                            randInt = random.randint(0, 20)
+                            if node.weight > 0:
+                                prevCount += 1
+                            if not node.wall:
                                 node.weight = random.randint(1,20)
                                 # node.wall = True
-                            elif not node.wall:
-                                # node.wall = False
-                                node.weight = 0
+                            else:
+                                wallC += 1
+                        print("yes" + str(prevCount))
+                        print("no" + str(1600-wallC))
+
+                        if prevCount ==  1600 - wallC:
+                                for c in range(columns):
+                                    for r in range(rows):
+                                        node = grid[c][r]
+                                        node.weight = 0
                   if event.key == pg.K_w:
                       x = pg.mouse.get_pos()[0]
                       y = pg.mouse.get_pos()[1]
@@ -670,7 +684,7 @@ def main():
                       c = int (x/grid_node_width)
                       r = int (y/grid_node_height)
                       if grid[c][r].weight > 0:
-                        grid[c][r].weight -= 1
+                        grid[c][r].weight = 0
                     
                   if event.key == pg.K_c:
                      result = False
@@ -718,7 +732,7 @@ def main():
                         if node.visited:
                             numVisited += 1
               toprint = mazeGen(frontier, startTime)
-              if numVisited > 1050:
+              if numVisited > 1070:
                   generate  = False
                   numVisited = 0
                   for c in range(columns):
@@ -778,8 +792,9 @@ def main():
             y = pg.mouse.get_pos()[1]
             c = int (x/grid_node_width)
             r = int (y/grid_node_height)
-            nodeInfo = out.render("Node Weight: " + str(grid[c][r].weight) +  " Node Position: " + str(grid[c][r].x) + ", " + str(grid[c][r].y), True, (0,0,0), (250,250,250))
-            window.blit(nodeInfo, (window_width/2-nodeInfo.get_width()/2, 0))
+            if not grid[c][r].wall:
+                nodeInfo = out.render("Node Weight: " + str(grid[c][r].weight) +  " Node Position: " + str(grid[c][r].x) + ", " + str(grid[c][r].y), True, (0,0,0), (250,250,250))
+                window.blit(nodeInfo, (window_width/2-nodeInfo.get_width()/2, 0))
 
         # display result on top of screen; fill storage w results of search; 
           if result == True:
