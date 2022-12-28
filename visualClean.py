@@ -732,7 +732,7 @@ def main():
                         if node.visited:
                             numVisited += 1
               toprint = mazeGen(frontier, startTime)
-              if numVisited > 1070:
+              if numVisited > 1080:
                   generate  = False
                   numVisited = 0
                   for c in range(columns):
@@ -774,6 +774,7 @@ def main():
                   if node.wall == True:
                       node.draw(gridsurf, (0, 0, 0), 0)
                       wallCount += 1
+                      node.weight = 0
                   if node.path == True:
                       node.draw(gridsurf, (250,0, 0), 0)
                       begin_search = False
