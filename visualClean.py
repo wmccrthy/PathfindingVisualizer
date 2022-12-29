@@ -7,16 +7,17 @@ import time
 pg.init()
 # info = pg.display.Info()
 # SIZE = WIDTH, HEIGHT = info.current_w, info.current_h
-window_width = 1000
+window_width = 1120
 window_height = 800
 window = pg.display.set_mode((window_width, window_height))
-columns = 40
-rows = 40
+columns = 35
+rows = 25
 grid_node_width = window_width / columns
 grid_node_height = window_height / rows
 grid = []
 
 out = pg.font.SysFont('chalkboardse', 15)
+outS = pg.font.SysFont('chalkboardse', 12)
 pg.display.set_caption("Pathfinding Visualizer")
 
 
@@ -64,13 +65,13 @@ class Node:
       self.parent = None
       self.path = False
 
-  def draw(self, window, color, separation):
+  def draw(self, window, color, separation, seeNode = False):
       navX = pg.mouse.get_pos()[0]
       navY = pg.mouse.get_pos()[1]
       width = 0
       border_rad = 0
       if abs(navX - (self.x*grid_node_width+(grid_node_width/2))) < grid_node_width/2.25 and abs(navY - (self.y * grid_node_height)-grid_node_height/2) < grid_node_height/2.25:
-          if color == (0,0,0):
+          if self.wall:
               shade = (50,70,70)
           else:
               shade = ((color[0]*7/8, color[1]*7/8, color[2]*7/8))
@@ -78,6 +79,21 @@ class Node:
           pg.draw.rect(window, shade, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation), border_radius=2)
           width = 1
           border_rad = 2
+          if self.wall:
+              col = (250,250,250)
+              wt = "Wall"
+          else:
+              col = (0,0,0)
+              if self.weight > 25:
+                  col = (250,250,250)
+              wt = str(self.weight)
+          if seeNode:
+            pos = outS.render(str(self.x) + "," + str(self.y), True, col)
+            wght = outS.render(wt, True, col)
+            window.blit(pos, (self.x*grid_node_width+grid_node_width/2-pos.get_width()/2, self.y*grid_node_height-grid_node_height/4+5))
+            window.blit(wght, (self.x*grid_node_width+grid_node_width/2-wght.get_width()/2, self.y*grid_node_height+grid_node_height/2))
+        #   add text within highlighted/selected node displaying on top position in x,y and below the weight 
+
       pg.draw.rect(window, color, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation), width=width, border_radius=border_rad)
     #   pg.draw.aaline()
 #  function for appending all legal actions to nodes
@@ -457,8 +473,6 @@ def main():
                  
                  
                  
-                     
-                 
       while display_instruc and not display_mainmen:
           pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
           window.fill((250,250,250))
@@ -469,12 +483,16 @@ def main():
           instructions2 = font.render("press corresponding key after start or target set to reset ", True, (0, 0, 0))
           algos = font.render("d to use depth first search, b to use breadth first search. a to use a*, u to do dijkstras", True,(0, 0, 0))
           instructions3 = font.render("press r or c to reset search, c keeps walls. press m to generate a maze", True, (0, 0, 0))
+          instructions4 = font.render("press w to weight the hovered node; press l to generate a randomized weight field, press l again to reset all weights", True, (0, 0, 0))
+          instructions1 = font.render("the node that is hovered over will be highlighted and display its position and weight; press n to toggle info display", True, (0,0,0))
           click = font.render("press delete to return to main menu from any subpage", True, (0, 0, 0))
-          window.blit(click, (window_width/2-click.get_width()/2, header_cords[1]+310))
-          window.blit(instructions, (window_width/2-instructions.get_width()/2, header_cords[1]+100))
-          window.blit(instructions2, (window_width/2-instructions2.get_width()/2, header_cords[1]+155))
-          window.blit(algos, (window_width/2-algos.get_width()/2, header_cords[1]+210))
-          window.blit(instructions3,  (window_width/2-instructions3.get_width()/2, header_cords[1]+265))
+          window.blit(click, (window_width/2-click.get_width()/2, header_cords[1]+410))
+          window.blit(instructions4, (window_width/2-instructions4.get_width()/2, header_cords[1]+365))
+          window.blit(instructions1, (window_width/2-instructions1.get_width()/2, header_cords[1]+100))
+          window.blit(instructions, (window_width/2-instructions.get_width()/2, header_cords[1]+155))
+          window.blit(instructions2, (window_width/2-instructions2.get_width()/2, header_cords[1]+210))
+          window.blit(algos, (window_width/2-algos.get_width()/2, header_cords[1]+265))
+          window.blit(instructions3,  (window_width/2-instructions3.get_width()/2, header_cords[1]+310))
           pg.display.flip()
           for event in pg.event.get():
               if event.type == pg.QUIT:
@@ -732,7 +750,7 @@ def main():
                         if node.visited:
                             numVisited += 1
               toprint = mazeGen(frontier, startTime)
-              if numVisited > 1080:
+              if numVisited > 600:
                   generate  = False
                   numVisited = 0
                   for c in range(columns):
@@ -751,51 +769,42 @@ def main():
           wallCount = 0
         
         #   surf for grid (used to have nav tab on left)
-          gridsurf = pg.Surface((1200, 800))
+          gridsurf = pg.Surface((1120, 800))
           gridsurf.fill((250, 250,250 ))
           
           for c in range(columns):
               for r in range(rows):
                   node = grid[c][r]
-                  node.draw(gridsurf, (250, 250, 250), 0)
+                  node.draw(gridsurf, (250, 250, 250), 0, seeNode)
                   if node.weight > 0:
                     #   print(node.weight)
-                      node.draw(gridsurf, (220-node.weight*5,220-node.weight*5,220-node.weight*5), 0)
+                      node.draw(gridsurf, (220-node.weight*5,220-node.weight*5,220-node.weight*5), 0, seeNode)
                     #   make thing to display info abt node hovered over at top
                   if node.start == True:
-                      node.draw(gridsurf, (0,205, 0), 0)
+                      node.draw(gridsurf, (0,205, 0), 0, seeNode)
                   if node.target == True:
-                      node.draw(gridsurf, (250, 0, 0), 0)
+                      node.draw(gridsurf, (250, 0, 0), 0, seeNode)
                   if node.queued == True:
-                      node.draw(gridsurf, (200, 140, 130), 0)
+                      node.draw(gridsurf, (200, 140, 130), 0, seeNode)
                   if not node.start and node.visited == True:
                       if not generate:
-                        node.draw(gridsurf, (0, 0, 250), 0)
+                        node.draw(gridsurf, (0, 0, 250), 0, seeNode)
                   if node.wall == True:
-                      node.draw(gridsurf, (0, 0, 0), 0)
+                      node.draw(gridsurf, (0, 0, 0), 0, seeNode)
                       wallCount += 1
                       node.weight = 0
                   if node.path == True:
-                      node.draw(gridsurf, (250,0, 0), 0)
+                      node.draw(gridsurf, (250,0, 0), 0, seeNode)
                       begin_search = False
                       pathC += 1
 
                       result = True
                 
-          pg.draw.circle(gridsurf, (0,0,0),  (navX, navY), 3, width=1)
+          pg.draw.circle(gridsurf, (0,0,0),  (navX, navY), 2)
           pg.time.Clock().tick(360)
-
 
           window.blit(gridsurf, (0, 0))
           
-          if seeNode:
-            x = pg.mouse.get_pos()[0]
-            y = pg.mouse.get_pos()[1]
-            c = int (x/grid_node_width)
-            r = int (y/grid_node_height)
-            if not grid[c][r].wall:
-                nodeInfo = out.render("Node Weight: " + str(grid[c][r].weight) +  " Node Position: " + str(grid[c][r].x) + ", " + str(grid[c][r].y), True, (0,0,0), (250,250,250))
-                window.blit(nodeInfo, (window_width/2-nodeInfo.get_width()/2, 0))
 
         # display result on top of screen; fill storage w results of search; 
           if result == True:
