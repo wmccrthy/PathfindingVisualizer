@@ -84,7 +84,7 @@ class Node:
               wt = "Wall"
           else:
               col = (0,0,0)
-              if self.weight > 25:
+              if self.weight > 25 or self.visited or self.target:
                   col = (250,250,250)
               wt = str(self.weight)
           if seeNode:
@@ -308,8 +308,8 @@ def A_star(target, searching, frontier, startTime):
   return (runtime[:6], pathLength)
 
 
-def Dijkstra(target, searching, frontier, startTime):
-  pathCost = 0
+def Dijkstra(target, searching, frontier, startTime, pathCost):
+#   pathCost = 0
   if not frontier.isEmpty() and searching:
       pathCost += 1
     #   curNode = random.choice(frontier)
@@ -321,6 +321,7 @@ def Dijkstra(target, searching, frontier, startTime):
                       while curNode.start == False:
                           curNode.path = True
                           curNode = curNode.parent
+                          pathLength += curNode.weight 
                           pathLength += 1
                       stop = time.perf_counter()
                       runtime = str(stop - startTime)
@@ -675,14 +676,14 @@ def main():
                             if node.weight > 0:
                                 prevCount += 1
                             if not node.wall:
-                                node.weight = random.randint(1,20)
+                                node.weight = random.randint(1,35)
                                 # node.wall = True
                             else:
                                 wallC += 1
                         print("yes" + str(prevCount))
-                        print("no" + str(1600-wallC))
+                        print("no" + str(875-wallC))
 
-                        if prevCount ==  1600 - wallC:
+                        if prevCount ==  875 - wallC:
                                 for c in range(columns):
                                     for r in range(rows):
                                         node = grid[c][r]
@@ -740,7 +741,7 @@ def main():
               toprint = A_star(target, searching, frontier, startTime)
               alg = "A*"
           elif begin_search and frontier and ucs:
-              toprint = Dijkstra(target, searching, frontier, startTime)
+              toprint = Dijkstra(target, searching, frontier, startTime, 0)
               alg = 'Dijkstras'
           elif generate:
               numVisited = 0
