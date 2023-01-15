@@ -88,10 +88,10 @@ class Node:
                   col = (250,250,250)
               wt = str(self.weight)
           if seeNode:
-            pos = outS.render(str(self.x) + "," + str(self.y), True, col)
+            # pos = outS.render(str(self.x) + "," + str(self.y), True, col)
             wght = outS.render(wt, True, col)
-            window.blit(pos, (self.x*grid_node_width+grid_node_width/2-pos.get_width()/2, self.y*grid_node_height-grid_node_height/4+5))
-            window.blit(wght, (self.x*grid_node_width+grid_node_width/2-wght.get_width()/2, self.y*grid_node_height+grid_node_height/2))
+            # window.blit(pos, (self.x*grid_node_width+grid_node_width/2-pos.get_width()/2, self.y*grid_node_height-grid_node_height/4+5))
+            window.blit(wght, (self.x*grid_node_width+grid_node_width/2-wght.get_width()/2, self.y*grid_node_height+wght.get_height()/3))
         #   add text within highlighted/selected node displaying on top position in x,y and below the weight 
 
       pg.draw.rect(window, color, (self.x * grid_node_width, self.y * grid_node_height, grid_node_width-separation, grid_node_height-separation), width=width, border_radius=border_rad)
@@ -485,7 +485,7 @@ def main():
           algos = font.render("d to use depth first search, b to use breadth first search. a to use a*, u to do dijkstras", True,(0, 0, 0))
           instructions3 = font.render("press r or c to reset search, c keeps walls. press m to generate a maze", True, (0, 0, 0))
           instructions4 = font.render("press w to weight the hovered node; press l to generate a randomized weight field, press l again to reset all weights", True, (0, 0, 0))
-          instructions1 = font.render("the node that is hovered over will be highlighted and display its position and weight; press n to toggle info display", True, (0,0,0))
+          instructions1 = font.render("the node that is hovered over will be highlighted and display its weight/status; press n to toggle info display", True, (0,0,0))
           click = font.render("press delete to return to main menu from any subpage", True, (0, 0, 0))
           window.blit(click, (window_width/2-click.get_width()/2, header_cords[1]+410))
           window.blit(instructions4, (window_width/2-instructions4.get_width()/2, header_cords[1]+365))
@@ -680,8 +680,8 @@ def main():
                                 # node.wall = True
                             else:
                                 wallC += 1
-                        print("yes" + str(prevCount))
-                        print("no" + str(875-wallC))
+                        # print("yes" + str(prevCount))
+                        # print("no" + str(875-wallC))
 
                         if prevCount ==  875 - wallC:
                                 for c in range(columns):
@@ -751,7 +751,7 @@ def main():
                         if node.visited:
                             numVisited += 1
               toprint = mazeGen(frontier, startTime)
-              if numVisited > 600:
+              if numVisited > 625:
                   generate  = False
                   numVisited = 0
                   for c in range(columns):
